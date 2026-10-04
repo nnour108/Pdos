@@ -1,15 +1,15 @@
 {
  "id": "./",
- "name": "نظام تشغيل الانضباط الشخصي",
- "short_name": "الانضباط",
+ "name": "HABIT MENTALITY",
+ "short_name": "HABIT MENTALITY",
  "lang": "ar",
  "dir": "rtl",
  "start_url": "./index.html",
  "scope": "./",
  "display": "standalone",
  "orientation": "portrait",
- "background_color": "#0f1a1f",
- "theme_color": "#0e7c7b",
+ "background_color": "#0b1f3a",
+ "theme_color": "#0b1f3a",
  "icons": [
   {
    "src": "icon-192.png",

@@ -859,4 +859,26 @@ html,body,*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none
 input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
 </style>
 <script>addEventListener('contextmenu',e=>{if(!/^(INPUT|TEXTAREA)$/.test((e.target||{}).tagName||''))e.preventDefault()});</script>
+<script>
+/* الذكاء الاصطناعي المستقل: مزوّد بمفتاحك أنت + احتياطي محلي. والويدجت يستقبل ملخص اليوم */
+(function(){
+const PV={gemini:['Gemini (فيه خطة مجانية)','gemini-flash-latest'],anthropic:['Anthropic','claude-sonnet-5-5'],openai:['OpenAI','gpt-4o-mini'],openrouter:['OpenRouter','openrouter/auto']};window.hmPV=PV;
+const cfg=()=>{try{return JSON.parse(localStorage.getItem('hm_ai')||'null')}catch(x){return null}},$$=i=>document.getElementById(i);
+async function call(c,txt){const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),90000);try{let url,h={'Content-Type':'application/json'},b,pick;const m=c.m||PV[c.p][1];
+if(c.p==='gemini'){url='https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent?key='+encodeURIComponent(c.k);b={contents:[{role:'user',parts:[{text:txt}]}],generationConfig:{temperature:.6}};pick=d=>((d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[]).map(p=>p.text||'').join('')}
+else if(c.p==='anthropic'){url='https://api.anthropic.com/v1/messages';h['x-api-key']=c.k;h['anthropic-version']='2023-06-01';h['anthropic-dangerous-direct-browser-access']='true';b={model:m,max_tokens:2000,messages:[{role:'user',content:txt}]};pick=d=>(d.content||[]).map(x=>x.text||'').join('')}
+else{url=c.p==='openai'?'https://api.openai.com/v1/chat/completions':'https://openrouter.ai/api/v1/chat/completions';h.Authorization='Bearer '+c.k;b={model:m,messages:[{role:'user',content:txt}]};pick=d=>(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||''}
+const r=await fetch(url,{method:'POST',headers:h,body:JSON.stringify(b),signal:ctl.signal}),d=await r.json().catch(()=>({}));
+if(!r.ok)throw new Error((d.error&&(d.error.message||d.error))||('HTTP '+r.status));const t=pick(d);if(!t)throw new Error('رد فارغ');return t}finally{clearTimeout(tm)}}
+const _c=window.claude;
+window.claude={use:async n=>{const c=cfg();if(c&&c.k&&PV[c.p])return async msgs=>{const txt=msgs.map(x=>x.content).join('\n\n');try{return{text:await call(c,txt)}}catch(x){return{text:'⚠️ تعذّر الاتصال بمزوّد الذكاء ('+String(x.message||x).slice(0,160)+'). هذا تحليل محلي بدلًا منه.\n\n'+window.LC(txt)}}};return _c&&_c.use?_c.use(n):null}};
+window.hmAiSave=()=>{localStorage.setItem('hm_ai',JSON.stringify({p:$$('hmP').value,k:$$('hmK').value.trim(),m:$$('hmM').value.trim()}));$$('hmR').textContent='✅ اتحفظ على جهازك فقط'};
+window.hmAiTest=async()=>{const r=$$('hmR');r.textContent='جارٍ الاختبار…';try{hmAiSave();r.textContent='✅ شغّال: '+(await call(cfg(),'رد بكلمة واحدة: تمام')).slice(0,40)}catch(x){r.textContent='❌ '+String(x.message||x).slice(0,140)}};
+window.hmAiClear=()=>{localStorage.removeItem('hm_ai');render()};
+const card=()=>{const c=cfg()||{p:'gemini',k:'',m:''};return `<div class="card"><h3>🤖 الذكاء الاصطناعي (مستقل)</h3><div class="mut">مفتاحك يتخزن على جهازك فقط ولا يدخل النسخ الاحتياطي. من غير مفتاح يعمل التحليل المحلي. مع المفتاح، ملخص بياناتك يُرسل للمزوّد الذي تختاره. للمفتاح المجاني: aistudio.google.com/apikey (الخطة المجانية قد تستخدم المحتوى لتحسين منتجاتها، وقد لا تتوفر في بعض الدول).</div><label style="margin-top:6px">المزوّد</label><select id="hmP" onchange="$$('hmM').placeholder=hmPV[this.value][1]">${Object.entries(PV).map(([k,v])=>`<option value="${k}" ${c.p===k?'selected':''}>${v[0]}</option>`).join('')}</select><label style="margin-top:6px">مفتاح API</label><input id="hmK" type="password" value="${e(c.k)}" placeholder="الصق المفتاح هنا"><label style="margin-top:6px">اسم الموديل (اختياري)</label><input id="hmM" value="${e(c.m)}" placeholder="${PV[c.p][1]}"><div class="mut">أسماء الموديلات تتغير؛ لو ظهر خطأ موديل، عدّل الاسم من لوحة المزوّد.</div><div class="row" style="margin-top:8px"><button class="pri" onclick="hmAiTest()">حفظ واختبار</button><button onclick="hmAiClear()">مسح المفتاح</button></div><div id="hmR" class="mut" style="margin-top:6px"></div></div>`};
+window.$$=$$;const _vS=vSet;vSet=function(){return _vS()+card()};
+setInterval(()=>{try{if(!window.AndroidBridge)return;const pp=pts([T]),due=S.habits.filter(h=>{const v=ver(h,T),f=v.freq||{};return !(h.ar||h.arch||h.archived)&&T>=h.created&&!(h.en&&T>h.en)&&!excl(h,T)&&f.t!=='week'&&f.t!=='month'&&!(f.t==='days'&&!(f.days||[]).includes(wIdx(T)))}),pend=due.filter(h=>!((lg(T,h.id)||{}).l>0));
+AndroidBridge.widget(JSON.stringify({p:pp[1]?Math.round(100*pp[0]/pp[1]):0,d:due.length-pend.length,n:due.length,s:bstate().s,t:pend.slice(0,3).map(h=>'• '+h.name).join('\n')||'✅ خلّصت عادات اليوم'}))}catch(x){}},10000);
+})();
+</script>
 </body>

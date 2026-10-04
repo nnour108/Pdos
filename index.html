@@ -853,4 +853,10 @@ const _vc=vCoach;vCoach=function(){return _vc().replace('<div id="cl">','<div cl
 })();
 </script>
 <script>if('serviceWorker'in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<style>
+/* منع التحديد والقائمة عند الضغط المطوّل (يبقى التحديد في خانات الكتابة فقط) */
+html,body,*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
+</style>
+<script>addEventListener('contextmenu',e=>{if(!/^(INPUT|TEXTAREA)$/.test((e.target||{}).tagName||''))e.preventDefault()});</script>
 </body>

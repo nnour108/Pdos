@@ -1,0 +1,31 @@
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+    paths: ['android-project.zip']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Prepare project
+        run: |
+          unzip -q android-project.zip -d proj
+          OWNER=$(echo "${{ github.repository_owner }}" | tr 'A-Z' 'a-z')
+          REPO="${{ github.event.repository.name }}"
+          F=proj/app/src/main/java/com/habitmentality/app/MainActivity.java
+          sed -i "s#nnour108.github.io/Pdos#$OWNER.github.io/$REPO#g; s#\"nnour108.github.io\"#\"$OWNER.github.io\"#g" $F
+          for I in icon-maskable-512.png icon-512.png; do if [ -f "$I" ]; then cp "$I" proj/app/src/main/res/drawable-nodpi/ic_launcher.png; break; fi; done
+      - run: cd proj && gradle assembleRelease --no-daemon
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v${{ github.run_number }}" proj/app/build/outputs/apk/release/app-release.apk --title "HABIT MENTALITY ${{ github.run_number }}" --notes "APK"

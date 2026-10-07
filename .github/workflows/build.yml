@@ -2,7 +2,7 @@ name: Build APK
 on:
   workflow_dispatch:
   push:
-    paths: ['android-project.zip']
+    paths: ['android-project*.zip']
 permissions:
   contents: write
 jobs:
@@ -19,13 +19,22 @@ jobs:
           gradle-version: '8.7'
       - name: Prepare project
         run: |
-          unzip -q android-project.zip -d proj
+          Z=$(ls android-project*.zip | head -n 1)
+          echo "Using $Z"
+          rm -rf proj && mkdir proj && unzip -q "$Z" -d proj
+          S=$(find proj -name settings.gradle -print -quit)
+          if [ -z "$S" ]; then N=$(find proj -name '*.zip' -print -quit); if [ -n "$N" ]; then unzip -q "$N" -d proj/inner; S=$(find proj/inner -name settings.gradle -print -quit); fi; fi
+          if [ -z "$S" ]; then echo "settings.gradle not found. Zip contents:"; find proj -maxdepth 4 | head -50; exit 1; fi
+          ROOT=$(dirname "$S")
+          echo "ROOT=$ROOT"
+          echo "ROOT=$ROOT" >> $GITHUB_ENV
           OWNER=$(echo "${{ github.repository_owner }}" | tr 'A-Z' 'a-z')
           REPO="${{ github.event.repository.name }}"
-          F=proj/app/src/main/java/com/habitmentality/app/MainActivity.java
-          sed -i "s#nnour108.github.io/Pdos#$OWNER.github.io/$REPO#g; s#\"nnour108.github.io\"#\"$OWNER.github.io\"#g" $F
-          for I in icon-maskable-512.png icon-512.png; do if [ -f "$I" ]; then cp "$I" proj/app/src/main/res/drawable-nodpi/ic_launcher.png; break; fi; done
-      - run: cd proj && gradle assembleRelease --no-daemon
+          F=$(find "$ROOT" -name MainActivity.java -print -quit)
+          if [ -n "$F" ]; then sed -i "s#nnour108.github.io/Pdos#$OWNER.github.io/$REPO#g; s#\"nnour108.github.io\"#\"$OWNER.github.io\"#g" "$F"; fi
+          D=$(find "$ROOT" -type d -name drawable-nodpi -print -quit)
+          for I in icon-maskable-512.png icon-512.png; do if [ -f "$I" ] && [ -n "$D" ]; then cp "$I" "$D/ic_launcher.png"; break; fi; done
+      - run: cd "$ROOT" && gradle assembleRelease --no-daemon
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "v${{ github.run_number }}" proj/app/build/outputs/apk/release/app-release.apk --title "HABIT MENTALITY ${{ github.run_number }}" --notes "APK"
+        run: gh release create "v${{ github.run_number }}" "$ROOT/app/build/outputs/apk/release/app-release.apk" --title "HABIT MENTALITY ${{ github.run_number }}" --notes "APK"
